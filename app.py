@@ -83,7 +83,7 @@ def send_message_handler(msg):
             async_check_stock = AsyncStock()
             async_check_stock.start()
 
-        emit('getMessage', {'name':current_user.name, 'message':bot_msg}, broadcast=False)
+        emit('getMessage', {'name':"bot", 'message':bot_msg}, broadcast=False)
 
 @io.on('message')
 def message_handler(msg):

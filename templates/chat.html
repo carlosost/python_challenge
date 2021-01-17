@@ -16,8 +16,9 @@
 </style>
 
 <div class="column is-6 is-offset-3">
+    <h1 class="title">{{ name }} chat window</h1>
     <div class="box">
-        <div class="chat" style="height: 400px; overflow-y: scroll;"></div>
+        <div class="chat" id="chatId" style="height: 400px; overflow-y: scroll;"></div>
         <div>
             <form>
                 <div class="field">
@@ -39,13 +40,14 @@
 
         function addToChat(msg, reloading) {
             const span = document.createElement("span");
-            const chat = document.querySelector(".chat");
+            const chatHTMLDivElement = document.querySelector(".chat");
             span.innerHTML = `<span><strong>${msg.name}:</strong> ${msg.message}</span>`;
-            chat.append(span);
+            chatHTMLDivElement.append(span);
 
             if(!reloading) {
-                if(chat.childElementCount > 50) {
-
+                if(chatHTMLDivElement.childElementCount > 50) {
+                    const chatHTMLCollection = document.getElementsByClassName("chat");
+                    chatHTMLCollection[0].removeChild(chatHTMLCollection[0].childNodes[0]);
                 }
             }
         }
@@ -65,6 +67,7 @@
 
         socket.on('getMessage', (msg) => {
             addToChat(msg, false)
+            scrollToBottom()
         })
 
         
@@ -72,7 +75,12 @@
             for(msg of msgs) {
                 addToChat(msg, true)
             }
+            scrollToBottom()
         })
+
+        function scrollToBottom() {
+            document.getElementById('chatId').scrollTop = document.getElementById('chatId').scrollHeight
+        }
 
     }
 

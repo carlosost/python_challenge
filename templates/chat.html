@@ -1,71 +1,88 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <style>
-        .chat {
-            display: flex;
-            flex-direction: column;
-        }
-        .chat span {
-            margin-bottom: 10px;
-        }
-        form {
-            margin-top: 10px;
-        }
-    </style>
-</head>
-<body>
-    <div class="chat"></div>
-    <div>
-        <form>
-            <input type="text" placeholder="Your name">
-            <input type="text" placeholder="Your message">
-            <button type="submit">Send</button>
-        </form>
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    .chat {
+        display: flex;
+        flex-direction: column;
+        align-items: start;
+    }
+    .chat span {
+        margin-bottom: 10px;
+    }
+    form {
+        margin-top: 10px;
+    }
+</style>
+
+<div class="column is-6 is-offset-3">
+    <div class="box">
+        <div class="chat" style="height: 400px; overflow-y: scroll;"></div>
+        <div>
+            <form>
+                <div class="field">
+                    <div class="control">
+                        <input class="input is-large" type="text" name="name" placeholder="Your Name" value={{ name }}>
+                    </div>
+                </div>
+    
+                <div class="field">
+                    <div class="control">
+                        <input class="input is-large" type="text" name="message" placeholder="Your Message" autofocus="">
+                    </div>
+                </div>
+
+                <button type="submit" class="button is-block is-info is-small">Send</button>
+            </form>
+        </div>
     </div>
+</div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.0.4/socket.io.js"></script>
-    <script>
-        window.onload = function() {
-            const socket = io('http://127.0.0.1:5000');
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.0.4/socket.io.js"></script>
+<script>
+    window.onload = function() {
+        const socket = io('http://127.0.0.1:5000');
 
-            function addToChat(msg) {
-                const span = document.createElement("span");
-                const chat = document.querySelector(".chat");
-                span.innerHTML = `<strong>${msg.name}:</strong> ${msg.message}`;
-                chat.append(span);
-            }
+        function addToChat(msg, reloading) {
+            const span = document.createElement("span");
+            const chat = document.querySelector(".chat");
+            span.innerHTML = `<span><strong>${msg.name}:</strong> ${msg.message}</span>`;
+            chat.append(span);
 
-            socket.on('connect', () => {
-                socket.send('User is connected to the socket!')
-            });
+            if(!reloading) {
+                if(chat.childElementCount > 50) {
 
-            document.querySelector("form").addEventListener("submit", 
-                function(event) {
-                    event.preventDefault();
-
-                    socket.emit('sendMessage', {
-                        name: event.target[0].value,
-                        message: event.target[1].value})
-
-                    event.target[0].value = "";
-                    event.target[1].value = "";
-                })
-
-            socket.on('getMessage', (msg) => {
-                addToChat(msg)
-            })
-
-            
-            socket.on('message', (msgs) => {
-                for(msg of msgs) {
-                    addToChat(msg)
                 }
-            })
-
+            }
         }
 
-    </script>
-</body>
-</html>
+        socket.on('connect', () => {
+            socket.send('User is connected to the socket!')
+        });
+
+        document.querySelector("form").addEventListener("submit", 
+            function(event) {
+                event.preventDefault();
+
+                socket.emit('sendMessage', {
+                    name: event.target[0].value,
+                    message: event.target[1].value})
+
+                event.target[1].value = "";
+            })
+
+        socket.on('getMessage', (msg) => {
+            addToChat(msg, false)
+        })
+
+        
+        socket.on('message', (msgs) => {
+            for(msg of msgs) {
+                addToChat(msg, true)
+            }
+        })
+
+    }
+
+</script>
+{% endblock %}

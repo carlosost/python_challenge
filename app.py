@@ -1,18 +1,47 @@
-from flask.app import Flask
-from flask.templating import render_template
+from flask import Flask
+from flask import Blueprint, render_template
+from flask_login import LoginManager, login_required, current_user
 from flask_socketio import SocketIO, emit, send
-import threading
-from stock import check_stock_quote
+from flask_sqlalchemy import SQLAlchemy
 
+import threading
+
+from stock import check_stock_quote
+from auth import auth as auth_blueprint
+from models import db, User
+
+# create application
 app = Flask(__name__)
-app.secret_key = 'jobisty_secret_key'
+app.config['SECRET_KEY'] = 'jobsitysecretkey'
+app.register_blueprint(auth_blueprint)
+
+# bind database
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite3'
+db.init_app(app)
+
+# create and bind login manager
+login_manager = LoginManager()
+login_manager.login_view = 'auth.login'
+login_manager.init_app(app)
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
+# create and bind socket io
 io = SocketIO(app)
 
-messages = []
+@app.route('/')
+def index():
+    return render_template('index.html')
 
-@app.route("/")
-def home():
-    return render_template("chat.html")
+@app.route('/chat')
+@login_required
+def chat_window():
+    return render_template('chat.html', name=current_user.name)
+
+# store message history (50 last)
+messages = []
 
 @io.on('sendMessage')
 def send_message_handler(msg):
@@ -62,5 +91,3 @@ def message_handler(msg):
 
 if __name__ == "__main__":
     io.run(app, debug=True)
-
-    "012 4/stock="

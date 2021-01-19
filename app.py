@@ -104,10 +104,8 @@ def check_queue_handler():
         id_msgs = queues[current_user.id]
         del queues[current_user.id]
     except KeyError:
-        print('id not yet at dict')
         send([])
     else:
-        print('id is at dict')
         send(id_msgs)
 
 

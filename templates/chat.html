@@ -38,6 +38,10 @@
     window.onload = function() {
         const socket = io('http://127.0.0.1:5000');
 
+        function scrollToBottom() {
+            document.getElementById('chatId').scrollTop = document.getElementById('chatId').scrollHeight
+        }
+
         function addToChat(msg, reloading) {
             const span = document.createElement("span");
             const chatHTMLDivElement = document.querySelector(".chat");
@@ -52,10 +56,6 @@
             }
         }
 
-        socket.on('connect', () => {
-            socket.send('User is connected to the socket!')
-        });
-
         document.querySelector("form").addEventListener("submit", 
             function(event) {
                 event.preventDefault();
@@ -65,12 +65,15 @@
                 event.target[0].value = "";
             })
 
+        socket.on('connect', () => {
+            socket.send('User is connected to the socket!')
+        });
+
         socket.on('getMessage', (msg) => {
             addToChat(msg, false)
             scrollToBottom()
         })
 
-        
         socket.on('message', (msgs) => {
             for(msg of msgs) {
                 addToChat(msg, true)
@@ -78,10 +81,9 @@
             scrollToBottom()
         })
 
-        function scrollToBottom() {
-            document.getElementById('chatId').scrollTop = document.getElementById('chatId').scrollHeight
-        }
-
+        setInterval(function() {
+            socket.emit('checkQueue', () => {})
+        }, 5000)
     }
 
 </script>

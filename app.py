@@ -24,12 +24,12 @@ login_manager = LoginManager()
 login_manager.login_view = 'auth.login'
 login_manager.init_app(app)
 
+# create and bind socket io
+io = SocketIO(app)
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
-
-# create and bind socket io
-io = SocketIO(app)
 
 @app.route('/')
 def index():
@@ -42,6 +42,9 @@ def chat_window():
 
 # store message history (50 last)
 messages = []
+
+# simulate a queue
+queues = {}
 
 @io.on('sendMessage')
 def send_message_handler(msg):
@@ -76,11 +79,17 @@ def send_message_handler(msg):
                 code = msg[code_start:]
 
             class AsyncStock(threading.Thread):
-                def run(self):
-                    rabbitmq_msg = check_stock_quote(code)
-                    print(rabbitmq_msg)
+                def run(id):
+                    msg = {'name':"bot", 'message':check_stock_quote(code)}
+                    try:
+                        queues[id] = queues[id] + [msg]
+                    except KeyError:
+                        queues[id] = [msg]
+                    print(queues)
 
             async_check_stock = AsyncStock()
+            async_check_stock = threading.Thread(
+                target=AsyncStock.run, args=(current_user.id,))
             async_check_stock.start()
 
         emit('getMessage', {'name':"bot", 'message':bot_msg}, broadcast=False)
@@ -88,6 +97,19 @@ def send_message_handler(msg):
 @io.on('message')
 def message_handler(msg):
     send(messages)
+
+@io.on('checkQueue')
+def check_queue_handler():
+    try:
+        id_msgs = queues[current_user.id]
+        del queues[current_user.id]
+    except KeyError:
+        print('id not yet at dict')
+        send([])
+    else:
+        print('id is at dict')
+        send(id_msgs)
+
 
 if __name__ == "__main__":
     io.run(app, debug=True)

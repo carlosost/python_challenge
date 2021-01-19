@@ -31,6 +31,9 @@ using the following format: “APPL.US quote is $93.42 per share”. The post ow
 ```sh
 git clone https://github.com/carlosost/python_challenge.git
 cd python_challenge
+virtualenv venv
+source venv/bin/activate
+pip3 install -r requirements.txt
 python3 app.py
 ```
 * Open a browser and type http://127.0.0.1:5000/
